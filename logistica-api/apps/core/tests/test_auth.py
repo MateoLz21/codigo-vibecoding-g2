@@ -35,6 +35,34 @@ class TokenObtainTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
         self.assertIn('refresh', response.data)
+        self.assertIn('is_superuser', response.data)
+        self.assertIn('username', response.data)
+
+    def test_obtain_tokens_is_superuser_false_for_regular_user(self):
+        """Usuario normal → is_superuser False en response."""
+        response = self.client.post(self.token_url, {
+            'username': 'testuser',
+            'password': 'testpass123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['is_superuser'])
+        self.assertEqual(response.data['username'], 'testuser')
+
+    def test_obtain_tokens_is_superuser_true_for_superuser(self):
+        """Superusuario → is_superuser True en response."""
+        superuser = User.objects.create_superuser(
+            username='admin',
+            password='adminpass123',
+        )
+        response = self.client.post(self.token_url, {
+            'username': 'admin',
+            'password': 'adminpass123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['is_superuser'])
+        self.assertEqual(response.data['username'], 'admin')
 
     def test_obtain_tokens_access_token_is_non_empty_string(self):
         """El access token obtenido es una cadena no vacía."""
